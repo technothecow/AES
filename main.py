@@ -52,14 +52,14 @@ class Encryptor:
     RCON = [b'\x01\x00\x00\x00', b'\x02\x00\x00\x00', b'\x04\x00\x00\x00', b'\x08\x00\x00\x00', b'\x10\x00\x00\x00',
             b'\x20\x00\x00\x00', b'\x40\x00\x00\x00', b'\x80\x00\x00\x00', b'\x1B\x00\x00\x00', b'\x36\x00\x00\x00']
 
-    def __init__(self, key: bytes=b'\x2b\x7e\x15\x16\x28\xae\xd2\xa6\xab\xf7\x15\x88\x09\xcf\x4f\x3c'):
+    def __init__(self, key: bytes = b'\x2b\x7e\x15\x16\x28\xae\xd2\xa6\xab\xf7\x15\x88\x09\xcf\x4f\x3c'):
         self.key = key
         self.keys = list()
         self.generateKeys()
         self.current_text = None
 
-    def encrypt_text(self, text: str) -> bytes:
-        self.current_text = [hex(i).lstrip('0x') for i in bytes(text, encoding='utf8')]
+    def encrypt_text(self, text: bytes) -> bytes:
+        self.current_text = text
         self.addRoundKey()
         for i in range(9):
             self.subBytes()
@@ -72,25 +72,30 @@ class Encryptor:
         return bytes(self.current_text)
 
     def subBytes(self):
+        temp = self.current_text
+        self.current_text = b''
         for i in range(len(self.current_text)):
-            print(self.current_text[i])
-            x, y = self.current_text[i]
-            self.current_text[i] = self.SBOX[x][y]
+            x, y = temp[i]
+            self.current_text += self.SBOX[x][y]
 
     def shiftRows(self):
-        temp_list = self.current_text.copy()
-        self.current_text[1] = temp_list[5]
-        self.current_text[2] = temp_list[10]
-        self.current_text[3] = temp_list[15]
-        self.current_text[5] = temp_list[9]
-        self.current_text[6] = temp_list[14]
-        self.current_text[7] = temp_list[3]
-        self.current_text[9] = temp_list[13]
-        self.current_text[10] = temp_list[2]
-        self.current_text[11] = temp_list[7]
-        self.current_text[13] = temp_list[1]
-        self.current_text[14] = temp_list[6]
-        self.current_text[15] = temp_list[11]
+        temp_list = self.current_text
+        self.current_text = b''
+        self.current_text += temp_list[0]
+        self.current_text += temp_list[5]
+        self.current_text += temp_list[10]
+        self.current_text += temp_list[15]
+        self.current_text += temp_list[4]
+        self.current_text += temp_list[9]
+        self.current_text += temp_list[14]
+        self.current_text += temp_list[3]
+        self.current_text += temp_list[13]
+        self.current_text += temp_list[2]
+        self.current_text += temp_list[7]
+        self.current_text += temp_list[12]
+        self.current_text += temp_list[1]
+        self.current_text += temp_list[6]
+        self.current_text += temp_list[11]
 
     def generateKeys(self):
         def doSBOX(b):
@@ -115,7 +120,8 @@ class Encryptor:
             columns.append(firstColumn.copy())
 
             for j in range(1, 4):
-                columns.append([a ^ b for (a, b) in zip(self.key[i * 16:(i + 1) * 16][4 * j:8 * j], columns[j - 1])].copy())
+                columns.append(
+                    [a ^ b for (a, b) in zip(self.key[i * 16:(i + 1) * 16][4 * j:8 * j], columns[j - 1])].copy())
 
             for j in columns:
                 self.key += bytes(j)
