@@ -122,9 +122,3 @@ class Encryptor:
 
     def addRoundKey(self):
         pass
-
-
-e = Encryptor('123')
-e.current_text = [hex(i).lstrip('0x') for i in bytes('testtesttesttest', encoding='utf8')]
-e.subBytes()
-print(e.current_text)
